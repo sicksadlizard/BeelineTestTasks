@@ -24,7 +24,24 @@ namespace Task2
 
         public bool Run()
         {
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(dirPath);
+                List<string> filePaths = new List<string>();
+                foreach(FileInfo fi in di.GetFiles())
+                {
+                    filePaths.Add(fi.FullName);
+                }
+                List<Dictionary<string, int>> topTenList = new List<Dictionary<string, int>>();
+                foreach(string s in filePaths)
+                {
+                    topTenList.Add(getTopTen(s));
+                }
+            }
+            catch
+            {
 
+            }
             return true;
         }
 
@@ -40,7 +57,7 @@ namespace Task2
                 text = Regex.Replace(text, "-(\r\n)", "");
                 foreach(Match m in Regex.Matches(text, exp))
                 {
-                    Console.WriteLine(m.Value);
+                    //Console.WriteLine(m.Value);
                     string val = m.Value.ToLower();
                     if(topTen.ContainsKey(val))
                     {
