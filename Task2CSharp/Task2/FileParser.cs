@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Task2
@@ -12,17 +13,23 @@ namespace Task2
     {
         private int wordLength = 0;
         private string dirPath;
-        string exp;
-
+        private Dictionary<string, int> _topTen;
+        private List<Dictionary<string, int>> _topTenList;
+        private Mutex mtx = new Mutex();
+        private List<Task> _taskList;
+        private string exp = "[a-zA-Z]{x,}";
+        
         public FileParser(int l, string p)
         {
             this.wordLength = l;
             this.dirPath = p;
-            exp = "[a-zA-Z]{x,}";
             exp = exp.Replace("x", wordLength.ToString());
+            _topTen = new Dictionary<string, int>();
+            _topTenList = new List<Dictionary<string, int>>();
+            _taskList = new List<Task>();
         }
 
-        public bool Run()
+        public void Run()
         {
             try
             {
@@ -32,26 +39,31 @@ namespace Task2
                 {
                     filePaths.Add(fi.FullName);
                 }
-                List<Dictionary<string, int>> topTenList = new List<Dictionary<string, int>>();
+                //List<Dictionary<string, int>> topTenList = new List<Dictionary<string, int>>();
                 foreach(string s in filePaths)
                 {
-                    topTenList.Add(getTopTen(s));
+                    Task tk = new Task(new Action<object>(_getTopTen), s);
+                    _taskList.Add(tk);
+                    tk.Start();
                 }
+                Task.WaitAll(_taskList.ToArray());
+                _mergeResults();
             }
-            catch
+            catch (Exception e)
             {
-
+                Console.WriteLine(e.Message);
             }
-            return true;
         }
 
-        public Dictionary<string, int> getTopTen(string filePath)
+        private void _getTopTen(object fp)
         {
+            
             Dictionary<string, int> topTen = new Dictionary<string, int>();
             StreamReader fs = null;
 
             try
             {
+                string filePath = (string)fp;
                 fs = new StreamReader(filePath);
                 string text = fs.ReadToEnd();
                 text = Regex.Replace(text, "-(\r\n)", "");
@@ -68,8 +80,13 @@ namespace Task2
                         topTen.Add(val, 1);
                     }
                 }
-                var sortedDict = from entry in topTen orderby entry.Value descending select entry;
-                topTen = sortedDict.Take(10).ToDictionary(x => x.Key, y => y.Value);
+
+                topTen = _sortAndGetTop(topTen, 10);
+
+                mtx.WaitOne();
+                _topTenList.Add(topTen);
+                mtx.ReleaseMutex();
+
             }
             catch(Exception e)
             {
@@ -79,8 +96,45 @@ namespace Task2
             {
                 if(fs != null) fs.Close();
             }
+        }
 
-            return topTen;
+        private Dictionary<string, int> _sortAndGetTop(Dictionary<string, int> d, int count)
+        {
+            var sortedDict = from entry in d orderby entry.Value descending select entry;
+            return sortedDict.Take(count).ToDictionary(x => x.Key, y => y.Value);
+        }
+
+        private void _mergeResults()
+        {
+            //MERGE
+            foreach (Dictionary<string, int> d in _topTenList)
+            {
+                foreach (KeyValuePair<string, int> kvp in d)
+                {
+                    //Console.WriteLine("Word \"{0}\" matches [{1}] times.", kvp.Key, kvp.Value);
+                    if (_topTen.ContainsKey(kvp.Key))
+                    {
+                        _topTen[kvp.Key] += kvp.Value;
+                    }
+                    else
+                    {
+                        _topTen.Add(kvp.Key, kvp.Value);
+                    }
+                }
+            }
+            _topTen = _sortAndGetTop(_topTen, 10);
+        }
+
+        public List<string> GetTopTen()
+        {
+            List<String> s = new List<string>();
+            foreach (KeyValuePair<string, int> kvp in _topTen)
+            {
+                s.Add("Word \"" + kvp.Key + "\" matches [" + kvp.Value + "] times.");
+            }
+
+            return s;
         }
     }
+
 }

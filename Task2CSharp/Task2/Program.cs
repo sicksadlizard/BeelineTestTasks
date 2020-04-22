@@ -17,14 +17,14 @@ namespace Task2
                 string path = args[0];
                 FileParser fileParser = new FileParser(wordLen, path);
                 fileParser.Run();
-                /*foreach(KeyValuePair<string, int> p in fileParser.getTopTen(path))
+                foreach(string s in fileParser.GetTopTen())
                 {
-                    Console.WriteLine("Word \"{0}\" uses [{1}] times", p.Key, p.Value);
-                }*/
+                    Console.WriteLine(s);
+                }
             }
-            catch
+            catch(Exception e)
             {
-
+                Console.WriteLine(e.Message);
             }
             Console.ReadKey();
         }
