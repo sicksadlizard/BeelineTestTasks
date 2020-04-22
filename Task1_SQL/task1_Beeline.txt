@@ -1,0 +1,33 @@
+select ltDateTime, rtDateTime from 
+(select row_number() over (order by dtDate) ltRowNum, dtDate as ltDateTime from calc order by dtDate)
+left join
+(select r.rn as rtRowNum, r.dtDate as rtDateTime from 
+    (select row_number() over (order by dtDate) rn, dtDate from calc where dtDate != 
+        (select min(dtDate) from calc) 
+    order by dtDate) as r)
+on ltRowNum == rtRowNum
+
+
+https://www.jdoodle.com/execute-sql-online/
+
+fullcode:
+
+
+create table tDates(dtDateTime datetime);
+
+insert into tDates values("2017-02-01 15:00:43");
+insert into tDates values("2017-03-18 10:30:10");
+insert into tDates values("2017-12-11 01:21:55");
+insert into tDates values("2017-12-11 15:33:03");
+insert into tDates values("2017-03-18 10:30:10");
+insert into tDates values("2017-02-22 08:40:42");
+insert into tDates values("2017-06-06 23:59:40");
+
+select ltDateTime, rtDateTime from 
+(select row_number() over (order by dtDateTime) ltRowNum, dtDateTime as ltDateTime from tDates order by dtDateTime)
+left join
+(select r.rn as rtRowNum, r.dtDateTime as rtDateTime from 
+    (select row_number() over (order by dtDateTime) rn, dtDateTime from tDates where dtDateTime != 
+        (select min(dtDateTime) from tDates) 
+    order by dtDateTime) as r)
+on ltRowNum == rtRowNum
