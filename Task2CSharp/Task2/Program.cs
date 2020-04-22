@@ -25,8 +25,17 @@ namespace Task2
             catch(Exception e)
             {
                 Console.WriteLine(e.Message);
+                PrintUsage();
             }
             Console.ReadKey();
+        }
+
+        private static void PrintUsage()
+        {
+
+            Console.WriteLine("Usage:\nTask2 <path> <count>\n where:");
+            Console.WriteLine("<path> - path to directory, that contains files to be analized");
+            Console.WriteLine("<count> - minimum word length");
         }
     }
 }
