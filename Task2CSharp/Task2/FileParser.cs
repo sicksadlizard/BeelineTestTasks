@@ -37,6 +37,7 @@ namespace Task2
                 {
                     filePaths.Add(fi.FullName);
                 }
+                if (filePaths.Count == 0) throw new FileNotFoundException("Directory is empty!");
             }
             catch(Exception e)
             {
