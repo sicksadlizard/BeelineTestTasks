@@ -16,7 +16,6 @@ namespace Task2
         private Dictionary<string, int> _topTen;
         private List<Dictionary<string, int>> _topTenList;
         private Mutex mtx = new Mutex();
-        private List<Task> _taskList;
         private string exp = "[a-zA-Z]{x,}";
         
         public FileParser(int l, string p)
@@ -26,26 +25,51 @@ namespace Task2
             exp = exp.Replace("x", wordLength.ToString());
             _topTen = new Dictionary<string, int>();
             _topTenList = new List<Dictionary<string, int>>();
-            _taskList = new List<Task>();
+        }
+
+        private List<string> _getFilePathsList(string path)
+        {
+            List<string> filePaths = new List<string>();
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(dirPath);
+                foreach (FileInfo fi in di.GetFiles())
+                {
+                    filePaths.Add(fi.FullName);
+                }
+            }
+            catch(Exception e)
+            {
+                throw e;
+            }
+            return filePaths;
+        }
+
+        private List<Task> _createAndRunTasks(List<string> filePaths)
+        {
+            List<Task> _taskList = new List<Task>();
+            try
+            {
+                foreach (string s in filePaths)
+                {
+                    Task tk = new Task(new Action<object>(_getTopTen), s);
+                    _taskList.Add(tk);
+                    tk.Start();
+                }
+            }
+            catch(Exception e)
+            {
+                throw e;
+            }
+            return _taskList;
         }
 
         public void Run()
         {
             try
             {
-                DirectoryInfo di = new DirectoryInfo(dirPath);
-                List<string> filePaths = new List<string>();
-                foreach(FileInfo fi in di.GetFiles())
-                {
-                    filePaths.Add(fi.FullName);
-                }
-                //List<Dictionary<string, int>> topTenList = new List<Dictionary<string, int>>();
-                foreach(string s in filePaths)
-                {
-                    Task tk = new Task(new Action<object>(_getTopTen), s);
-                    _taskList.Add(tk);
-                    tk.Start();
-                }
+                List<string> filePaths = _getFilePathsList(dirPath);
+                List<Task> _taskList = _createAndRunTasks(filePaths);                
                 Task.WaitAll(_taskList.ToArray());
                 _mergeResults();
             }
@@ -53,6 +77,31 @@ namespace Task2
             {
                 Console.WriteLine(e.Message);
             }
+        }
+
+        private Dictionary<string, int> _getMatches(string text)
+        {
+            Dictionary<string, int> matches = new Dictionary<string, int>();
+            try
+            {
+                foreach (Match m in Regex.Matches(text, exp))
+                {
+                    string val = m.Value.ToLower();
+                    if (matches.ContainsKey(val))
+                    {
+                        matches[val]++;
+                    }
+                    else
+                    {
+                        matches.Add(val, 1);
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                throw e;
+            }
+            return matches;
         }
 
         private void _getTopTen(object fp)
@@ -67,26 +116,13 @@ namespace Task2
                 fs = new StreamReader(filePath);
                 string text = fs.ReadToEnd();
                 text = Regex.Replace(text, "-(\r\n)", "");
-                foreach(Match m in Regex.Matches(text, exp))
-                {
-                    //Console.WriteLine(m.Value);
-                    string val = m.Value.ToLower();
-                    if(topTen.ContainsKey(val))
-                    {
-                        topTen[val]++;
-                    }
-                    else
-                    {
-                        topTen.Add(val, 1);
-                    }
-                }
-
+                
+                topTen = _getMatches(text);
                 topTen = _sortAndGetTop(topTen, 10);
 
                 mtx.WaitOne();
                 _topTenList.Add(topTen);
                 mtx.ReleaseMutex();
-
             }
             catch(Exception e)
             {
