@@ -26,6 +26,14 @@ namespace Task2
             {
                 PrintUsage();
             }
+            catch(AggregateException e)
+            {
+                foreach(Exception x in e.InnerExceptions)
+                {
+                    Console.WriteLine(x.Message);
+                }
+
+            }
             catch(Exception e)
             {
                 Console.WriteLine(e.Message);

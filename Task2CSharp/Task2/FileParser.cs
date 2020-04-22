@@ -30,78 +30,59 @@ namespace Task2
         private List<string> _getFilePathsList(string path)
         {
             List<string> filePaths = new List<string>();
-            try
+            DirectoryInfo di = new DirectoryInfo(dirPath);
+
+            foreach (FileInfo fi in di.GetFiles())
             {
-                DirectoryInfo di = new DirectoryInfo(dirPath);
-                foreach (FileInfo fi in di.GetFiles())
-                {
-                    filePaths.Add(fi.FullName);
-                }
-                if (filePaths.Count == 0) throw new FileNotFoundException("Directory is empty!");
+                filePaths.Add(fi.FullName);
             }
-            catch(Exception e)
-            {
-                throw e;
-            }
+
+            if (filePaths.Count == 0) throw new FileNotFoundException("Directory is empty!");
+
             return filePaths;
         }
 
         private List<Task> _createAndRunTasks(List<string> filePaths)
         {
             List<Task> _taskList = new List<Task>();
-            try
+            
+            foreach (string s in filePaths)
             {
-                foreach (string s in filePaths)
-                {
-                    Task tk = new Task(new Action<object>(_getTopTen), s);
-                    _taskList.Add(tk);
-                    tk.Start();
-                }
+                Task tk = new Task(new Action<object>(_getTopTen), s);
+                _taskList.Add(tk);
+                tk.Start();
             }
-            catch(Exception e)
-            {
-                throw e;
-            }
+            
             return _taskList;
         }
 
         public void Run()
         {
-            try
-            {
-                List<string> filePaths = _getFilePathsList(dirPath);
-                List<Task> _taskList = _createAndRunTasks(filePaths);                
-                Task.WaitAll(_taskList.ToArray());
-                _mergeResults();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            List<string> filePaths = _getFilePathsList(dirPath);
+            List<Task> _taskList = _createAndRunTasks(filePaths);                
+            Task.WaitAll(_taskList.ToArray());
+            _mergeResults();
         }
 
-        private Dictionary<string, int> _getMatches(string text)
+        private Dictionary<string, int> _getMatches(string text, string path)
         {
             Dictionary<string, int> matches = new Dictionary<string, int>();
-            try
+
+            foreach (Match m in Regex.Matches(text, exp))
             {
-                foreach (Match m in Regex.Matches(text, exp))
+                string val = m.Value.ToLower();
+                if (matches.ContainsKey(val))
                 {
-                    string val = m.Value.ToLower();
-                    if (matches.ContainsKey(val))
-                    {
-                        matches[val]++;
-                    }
-                    else
-                    {
-                        matches.Add(val, 1);
-                    }
+                    matches[val]++;
+                }
+                else
+                {
+                    matches.Add(val, 1);
                 }
             }
-            catch(Exception e)
-            {
-                throw e;
-            }
+
+            if (matches.Count == 0) throw new Exception("No words matches in file:\n" + path);
+            
             return matches;
         }
 
@@ -110,24 +91,21 @@ namespace Task2
             
             Dictionary<string, int> topTen = new Dictionary<string, int>();
             StreamReader fs = null;
+            string filePath = "";
 
             try
             {
-                string filePath = (string)fp;
+                filePath = (string)fp;
                 fs = new StreamReader(filePath);
                 string text = fs.ReadToEnd();
                 text = Regex.Replace(text, "-(\r\n)", "");
                 
-                topTen = _getMatches(text);
+                topTen = _getMatches(text, filePath);
                 topTen = _sortAndGetTop(topTen, 10);
 
                 mtx.WaitOne();
                 _topTenList.Add(topTen);
                 mtx.ReleaseMutex();
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
             }
             finally
             {
@@ -143,7 +121,6 @@ namespace Task2
 
         private void _mergeResults()
         {
-            //MERGE
             foreach (Dictionary<string, int> d in _topTenList)
             {
                 foreach (KeyValuePair<string, int> kvp in d)
