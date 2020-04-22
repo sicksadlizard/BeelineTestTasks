@@ -1,0 +1,7 @@
+C:\BeelineTestTasks\BeelineTestTasks\Task2CSharp\Task2\bin\Debug\Task2.exe.config
+C:\BeelineTestTasks\BeelineTestTasks\Task2CSharp\Task2\bin\Debug\Task2.exe
+C:\BeelineTestTasks\BeelineTestTasks\Task2CSharp\Task2\bin\Debug\Task2.pdb
+C:\BeelineTestTasks\BeelineTestTasks\Task2CSharp\Task2\obj\Debug\Task2.csprojAssemblyReference.cache
+C:\BeelineTestTasks\BeelineTestTasks\Task2CSharp\Task2\obj\Debug\Task2.csproj.CoreCompileInputs.cache
+C:\BeelineTestTasks\BeelineTestTasks\Task2CSharp\Task2\obj\Debug\Task2.exe
+C:\BeelineTestTasks\BeelineTestTasks\Task2CSharp\Task2\obj\Debug\Task2.pdb
